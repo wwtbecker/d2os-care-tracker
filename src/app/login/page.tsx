@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
+import { devBypassEmail, devBypassEnabled } from "@/lib/dev-bypass";
 
 export const metadata = { title: "Sign in" };
 
@@ -47,6 +48,29 @@ export default async function LoginPage(props: {
             Sign in with WWT SSO (Okta)
           </button>
         </form>
+
+        {devBypassEnabled() && (
+          <form
+            className="mt-4"
+            action={async () => {
+              "use server";
+              await signIn("dev-bypass", {
+                redirectTo: searchParams.callbackUrl ?? "/",
+              });
+            }}
+          >
+            <button
+              type="submit"
+              className="w-full rounded-lg border-2 border-dashed border-amber-400 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+            >
+              ⚠ Dev sign-in as {devBypassEmail()} (no Okta)
+            </button>
+            <p className="mt-2 text-center text-[11px] text-amber-600">
+              DEV_BYPASS_AUTH is on — local testing only. This button cannot
+              exist in a production build.
+            </p>
+          </form>
+        )}
 
         <p className="mt-6 text-center text-xs text-slate-400">
           Access is limited to the D2OS CSM team roster. This system contains

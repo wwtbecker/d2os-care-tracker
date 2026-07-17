@@ -3,6 +3,7 @@ import { requireMember } from "@/lib/session";
 import { getUnreadCount } from "@/lib/data";
 import { signOut } from "@/auth";
 import { NavLinks } from "@/components/nav-links";
+import { devBypassEnabled } from "@/lib/dev-bypass";
 
 export default async function AppLayout({
   children,
@@ -55,7 +56,15 @@ export default async function AppLayout({
         </div>
       </aside>
 
-      <main className="ml-60 min-h-screen flex-1 px-8 py-8">{children}</main>
+      <main className="ml-60 min-h-screen flex-1 px-8 py-8">
+        {devBypassEnabled() && (
+          <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-800">
+            DEV AUTH BYPASS ACTIVE — Okta sign-in is being skipped. Local
+            testing only; remove DEV_BYPASS_AUTH from .env.local when done.
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

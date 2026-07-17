@@ -109,6 +109,24 @@ npm run dev     # http://localhost:3000
 npm run build   # production build (CI gate)
 ```
 
+### 4a. Dev auth bypass (temporary, local only)
+
+Waiting on Okta credentials? Set in `.env.local`:
+
+```bash
+DEV_BYPASS_AUTH=true
+# DEV_BYPASS_EMAIL=elliot.becker@wwt.com   # optional; test as any roster member
+```
+
+`npm run dev` then shows a "Dev sign-in" button on the login page that skips
+Okta but **not** the roster check — the email must still be an active
+`team_members` row, so permissions behave exactly as they will in
+production (tip: set `DEV_BYPASS_EMAIL` to a CSM to test the owner-only
+edit rules). Guardrails: the flag is ignored outside development, the app
+**hard-crashes at build and startup if it's set with
+`NODE_ENV=production`**, and an amber banner shows on every page while it's
+active. Remove the flag (and ideally this feature) once Okta is live.
+
 ### 4b. Synthetic test data (local/dev only)
 
 ```bash
