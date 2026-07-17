@@ -65,6 +65,16 @@ export async function getTeamMemberByEmail(email: string): Promise<TeamMember | 
   return data;
 }
 
+export async function getTeamMemberById(id: string): Promise<TeamMember | null> {
+  const { data, error } = await db()
+    .from("team_members")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) fail("Failed to load team member", error);
+  return data;
+}
+
 export async function getTeamMembers(includeInactive = false): Promise<TeamMember[]> {
   let query = db().from("team_members").select("*").order("name");
   if (!includeInactive) query = query.eq("active", true);

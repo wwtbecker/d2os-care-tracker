@@ -8,8 +8,12 @@ import { useState } from "react";
  */
 export function ExecSummaryPanel({
   latest,
+  aiAvailable,
 }: {
   latest: { content: string; created_at: string } | null;
+  /** False when ANTHROPIC_API_KEY is not configured — the generate button
+   * degrades to an explanatory note instead of a failing request. */
+  aiAvailable: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,13 +49,20 @@ export function ExecSummaryPanel({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={generate}
-          disabled={loading}
-          className="rounded-lg bg-ink-900 px-4 py-2 text-sm font-semibold text-white hover:bg-ink-800 disabled:opacity-60"
-        >
-          {loading ? "Generating…" : "✦ Generate weekly Care 3 executive summary"}
-        </button>
+        {aiAvailable ? (
+          <button
+            onClick={generate}
+            disabled={loading}
+            className="rounded-lg bg-ink-900 px-4 py-2 text-sm font-semibold text-white hover:bg-ink-800 disabled:opacity-60"
+          >
+            {loading ? "Generating…" : "✦ Generate weekly Care 3 executive summary"}
+          </button>
+        ) : (
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            ✦ AI features unavailable — API key not configured. The weekly
+            executive summary will work once ANTHROPIC_API_KEY is set.
+          </p>
+        )}
         {content && (
           <button
             onClick={copy}

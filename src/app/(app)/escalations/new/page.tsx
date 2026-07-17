@@ -7,6 +7,7 @@ import {
   getTypes,
 } from "@/lib/data";
 import { EscalationForm } from "@/components/escalation-form";
+import { aiEnabled } from "@/lib/anthropic";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Log escalation" };
@@ -41,6 +42,7 @@ export default async function NewEscalationPage() {
           accounts={accounts}
           settings={settings}
           currentMemberId={member.id}
+          aiAvailable={aiEnabled()}
         />
       </div>
     </div>

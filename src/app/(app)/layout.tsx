@@ -4,6 +4,7 @@ import { getUnreadCount } from "@/lib/data";
 import { signOut } from "@/auth";
 import { NavLinks } from "@/components/nav-links";
 import { devBypassEnabled } from "@/lib/dev-bypass";
+import { pocMode } from "@/lib/auth-mode";
 
 export default async function AppLayout({
   children,
@@ -20,7 +21,13 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-20 flex w-60 flex-col bg-ink-950 text-slate-300">
+      <aside
+        className={`fixed inset-y-0 left-0 z-20 flex w-60 flex-col bg-ink-950 text-slate-300 ${
+          // Keep the sidebar footer (member info + switch user) clear of the
+          // fixed POC banner along the bottom edge.
+          pocMode() ? "pb-9" : ""
+        }`}
+      >
         <Link href="/" className="flex items-center gap-3 px-5 py-5">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
             D2
@@ -50,7 +57,7 @@ export default async function AppLayout({
               type="submit"
               className="mt-3 w-full rounded-md border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
             >
-              Sign out
+              {pocMode() ? "Switch user" : "Sign out"}
             </button>
           </form>
         </div>

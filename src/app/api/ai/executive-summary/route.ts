@@ -1,4 +1,4 @@
-import { anthropic, AI_MODEL } from "@/lib/anthropic";
+import { anthropic, aiEnabled, AI_MODEL, AI_UNAVAILABLE_MESSAGE } from "@/lib/anthropic";
 import { db } from "@/lib/supabase";
 import { getComments, getEscalations, getTouchpoints, logAudit } from "@/lib/data";
 import { requireMemberApi } from "@/lib/session";
@@ -14,6 +14,9 @@ export const maxDuration = 180;
 export async function POST() {
   const { member, response } = await requireMemberApi();
   if (!member) return response;
+  if (!aiEnabled()) {
+    return Response.json({ error: AI_UNAVAILABLE_MESSAGE }, { status: 503 });
+  }
 
   try {
     const escalations = (await getEscalations({ status: "active" })).filter(
