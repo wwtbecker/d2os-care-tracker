@@ -109,6 +109,23 @@ npm run dev     # http://localhost:3000
 npm run build   # production build (CI gate)
 ```
 
+### 4b. Synthetic test data (local/dev only)
+
+```bash
+npm run seed:dev            # clears previous seed data, then reseeds
+npm run seed:dev -- --clear # removes seed data only
+```
+
+Seeds 7 **fictional** accounts (no real WWT clients) and 18 escalations with
+realistic variation: overdue Care 2 cadences, an elevated Care 3 case with a
+full note history, resolved + archived records, and deliberately messy
+description text so the AI summarization/tier-suggestion features have real
+material. All seeded accounts carry a `SEED-` Gainsight ID, so clearing is
+exact and re-running is safe. Dates are relative to the run date, so a
+reseed always produces live-looking dashboards. **Don't run this against the
+production project once real escalation data exists** — it's for local/dev
+environments.
+
 ### 5. Deploy
 
 Any Node host works. On Vercel, `vercel.json` already schedules the daily

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:dev": "node --env-file-if-exists=.env.local scripts/seed-dev-data.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.1",
