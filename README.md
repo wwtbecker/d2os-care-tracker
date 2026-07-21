@@ -10,9 +10,9 @@ centralized, team-deployable system.
 > security is added. In this build:
 >
 > - **There is no real login.** The sign-in page is a "pick your name"
->   dropdown of the team roster (Elena, Will, Jamell, Scott, Chris, Tara,
->   Elliot). No passwords, no Okta. Anyone who can reach the app can act as
->   anyone on the roster.
+>   dropdown of the team roster (Elena, Chris, Tara, Elliot, Will, Jamell,
+>   Scott, Rai, Sahil, Daniel). No passwords, no Okta. Anyone who can reach
+>   the app can act as anyone on the roster.
 > - **Synthetic data only.** All seeded accounts and escalations are
 >   fictional. **Never enter real client data into this build** — a banner on
 >   every page says exactly that.
@@ -49,27 +49,40 @@ different role, hit **Switch user** at the bottom of the sidebar.
   done for the shared POC project).
 - `npm run seed:dev` is safe to re-run any time — it clears the previous
   synthetic data and reseeds fresh, with dates relative to today so
-  dashboards always look live. `npm run seed:dev -- --clear` removes the
-  synthetic data without reseeding.
+  dashboards always look live. It also re-syncs the team roster (by email),
+  so role corrections and new members land in an existing database.
+  `npm run seed:dev -- --clear` removes the synthetic data without reseeding.
+- The `build`/`start` scripts pin `NODE_ENV=production`. If a stray
+  `NODE_ENV=development` from the shell or a container image leaks into
+  `next build`, the build dies prerendering `/_global-error` ("Cannot read
+  properties of null (reading 'useContext')") and leaves a half-written
+  `.next` that serves nothing but 404s/crashes — the pin makes that
+  impossible. Don't remove it.
 
 ### Who's who in the POC roster
 
 | Name | Role | Can |
 |---|---|---|
-| Elena Vitkin | Admin | Everything: edit/close anyone's escalations, Admin page, archive |
-| Will, Jamell, Scott, Chris, Tara | CSM | View everything; edit/close/log touchpoints **only on their own** escalations; elevate their own Care 3s |
+| Elena Vitkin (Sr. Manager, Day-2 Operations) | Admin | Everything: edit/close anyone's escalations, Admin page, archive |
+| Chris Nickl (Director, Engineering Services) | Admin | Same as Elena — sits above the team on the org chart |
+| Tara Maher (Team Lead, Day-2 Ops) | Admin | Same as Elena — leads the team, not a CSM |
+| Will, Jamell, Scott, Rai, Sahil, Daniel | CSM | View everything; edit/close/log touchpoints **only on their own** escalations; elevate their own Care 3s |
 | Elliot Becker | Admin | Same as Elena (system admin) |
+
+(Roster verified against the WWT org chart. `npm run seed:dev` re-syncs
+roles/titles and adds any missing members by email, so an existing database
+picks up roster corrections on the next reseed.)
 
 ### Suggested 5-minute test script
 
 1. Pick **Will** → dashboard → *Log escalation* → create a Care 2 for a
    fictional account → log a touchpoint on it.
-2. Open one of **Tara's** escalations → confirm you can comment but **not**
+2. Open one of **Scott's** escalations → confirm you can comment but **not**
    edit/close it (no edit controls; the rule is also enforced server-side).
 3. *Switch user* → **Elena** → open the same escalation → you *can* edit it
    (admin override). Try **Reports** → CSV export and the PowerPoint deck.
 4. Still as Elena, open the not-yet-elevated Care 3 for **Helix
-   BioSciences** → *Elevate to leadership* → switch to **Elliot** (the other
+   BioSciences** → *Elevate to leadership* → switch to **Elliot** (another
    admin) to see the elevation notification.
 5. Note the AI panels: without `ANTHROPIC_API_KEY` they show *“AI features
    unavailable — API key not configured”* instead of failing.
@@ -155,8 +168,8 @@ can do. See `src/lib/auth-mode.ts` and `src/auth.ts`.
    policies** (service-role-only access — nothing is readable by anon or
    browser clients), and seeds:
    - the 3 care tiers + 3 escalation types,
-   - the team roster (Elena as admin; Will, Jamell, Scott, Chris, Tara as
-     CSMs; Elliot as system admin),
+   - the team roster (Elena, Chris, Tara as admins; Will, Jamell, Scott,
+     Rai, Sahil, Daniel as CSMs; Elliot as system admin),
    - default settings (types off, 14-day auto-archive, 1-day Care 2 cadence,
      visibility chain **disabled** with Nickl → Dobry → Wynne pre-staged).
 3. Copy `.env.example` → `.env.local`, fill in `SUPABASE_URL` +

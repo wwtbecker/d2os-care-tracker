@@ -92,6 +92,43 @@ async function clearSeedData() {
 }
 
 // ---------------------------------------------------------------------------
+// Team roster — verified against the WWT org chart. Upserted by email on
+// every run so role/title corrections and new members reach databases that
+// were created from an older migration (the shared POC project included).
+// Existing member rows keep their ids (escalations reference them by FK).
+//
+// Chris (Director, Engineering Services) and Tara (Team Lead, Day-2 Ops)
+// sit above/lead this team, so they get admin-level access, not CSM-level.
+// ---------------------------------------------------------------------------
+const ROSTER = [
+  { email: "elena.vitkin@wwt.com",  name: "Elena Vitkin",  title: "Sr. Manager, Day-2 Operations",  role: "admin" },
+  { email: "chris.nickl@wwt.com",   name: "Chris Nickl",   title: "Director, Engineering Services", role: "admin" },
+  { email: "tara.maher@wwt.com",    name: "Tara Maher",    title: "Team Lead, Day-2 Ops",           role: "admin" },
+  { email: "elliot.becker@wwt.com", name: "Elliot Becker", title: "Intern, Day-2 Operations",       role: "admin" },
+  { email: "will.feil@wwt.com",     name: "Will Feil",     title: "Customer Success Manager",       role: "csm" },
+  { email: "jamell.mixon@wwt.com",  name: "Jamell Mixon",  title: "Customer Success Manager",       role: "csm" },
+  { email: "scott.moyer@wwt.com",   name: "Scott Moyer",   title: "Customer Success Manager",       role: "csm" },
+  { email: "rai.rivera@wwt.com",    name: "Rai Rivera",    title: "Customer Success Manager",       role: "csm" },
+  { email: "sahil.ganjoo@wwt.com",  name: "Sahil Ganjoo",  title: "Customer Success Manager",       role: "csm" },
+  { email: "daniel.saito@wwt.com",  name: "Daniel Saito",  title: "Customer Success Manager",       role: "csm" },
+];
+
+async function syncRoster() {
+  await must(
+    db
+      .from("team_members")
+      .upsert(
+        ROSTER.map((m) => ({ ...m, active: true })),
+        { onConflict: "email" }
+      ),
+    "Syncing team roster"
+  );
+  console.log(
+    `Roster synced: ${ROSTER.length} members (${ROSTER.filter((m) => m.role === "admin").length} admin, ${ROSTER.filter((m) => m.role === "csm").length} CSM).`
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Fictional accounts (no real WWT clients)
 // ---------------------------------------------------------------------------
 const ACCOUNTS = [
@@ -629,4 +666,7 @@ async function seed() {
 
 // ---------------------------------------------------------------------------
 await clearSeedData();
-if (!clearOnly) await seed();
+if (!clearOnly) {
+  await syncRoster();
+  await seed();
+}
