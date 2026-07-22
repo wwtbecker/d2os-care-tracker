@@ -50,6 +50,7 @@ export function EmailDraftPanel() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [copied, setCopied] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   async function generate() {
     setLoading(true);
@@ -61,6 +62,7 @@ export function EmailDraftPanel() {
       setDraft(data);
       setSubject(data.subject);
       setBody(data.body);
+      setCollapsed(false); // a freshly generated draft always opens
     } catch (err) {
       setError(err instanceof Error ? err.message : "Draft generation failed.");
     } finally {
@@ -90,6 +92,15 @@ export function EmailDraftPanel() {
               ? "Regenerate draft"
               : "Draft Leadership Status Update"}
         </button>
+        {draft && (
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            aria-expanded={!collapsed}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            {collapsed ? "Show draft ▾" : "Hide draft ▴"}
+          </button>
+        )}
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
           Draft only — review before sending. This does not send email
           automatically.
@@ -99,7 +110,7 @@ export function EmailDraftPanel() {
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       )}
 
-      {draft && (
+      {draft && !collapsed && (
         <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
