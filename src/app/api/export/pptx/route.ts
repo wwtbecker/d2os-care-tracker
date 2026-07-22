@@ -1,3 +1,5 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import PptxGenJS from "pptxgenjs";
 import { db } from "@/lib/supabase";
 import { getEscalations, getTiers } from "@/lib/data";
@@ -25,6 +27,68 @@ const FONT = "Arial";
 function addBrandFooter(slide: PptxGenJS.Slide) {
   slide.addShape("rect", {
     x: 0, y: 7.42, w: 13.33, h: 0.08, fill: { color: WWT_LIGHT_BLUE },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Official WWT logo artwork (public/branding). Per brand rules: the white/
+// reversed full logo on the dark title slide, and the full-color monogram as
+// the small corner mark on white interior slides. The logo files are used
+// exactly as shipped — never recolored or stretched.
+// ---------------------------------------------------------------------------
+
+const BRANDING_DIR = path.join(process.cwd(), "public", "branding");
+const LOGO_WHITE_PNG = path.join(BRANDING_DIR, "White", "RGB", "WWT_Logo_RGB_White.png");
+const MONOGRAM_COLOR_PNG = path.join(
+  BRANDING_DIR, "WWT_Monogram", "RGB", "Color", "WWT_Monogram_RGB_Color.png"
+);
+
+interface LogoAsset {
+  dataUri: string;
+  /** width / height, read from the PNG itself. */
+  aspect: number;
+}
+
+const logoCache = new Map<string, LogoAsset | null>();
+
+/**
+ * Load a logo PNG and read its real pixel dimensions from the IHDR chunk
+ * (big-endian uint32 width/height at byte offsets 16/20). Render height is
+ * always derived from a target width via this ratio — hardcoding both
+ * dimensions would squish or stretch the artwork if the assumed ratio drifts
+ * from the shipped file.
+ */
+async function loadLogo(file: string): Promise<LogoAsset | null> {
+  if (logoCache.has(file)) return logoCache.get(file) ?? null;
+  let asset: LogoAsset | null = null;
+  try {
+    const buf = await fs.readFile(file);
+    const isPng = buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47;
+    const width = isPng ? buf.readUInt32BE(16) : 0;
+    const height = isPng ? buf.readUInt32BE(20) : 0;
+    if (width > 0 && height > 0) {
+      asset = {
+        dataUri: `data:image/png;base64,${buf.toString("base64")}`,
+        aspect: width / height,
+      };
+    }
+  } catch {
+    asset = null; // missing artwork → caller falls back to text placeholder
+  }
+  logoCache.set(file, asset);
+  return asset;
+}
+
+/** Full-color monogram in the top-right corner of a white interior slide. */
+function addInteriorMark(slide: PptxGenJS.Slide, monogram: LogoAsset | null) {
+  if (!monogram) return;
+  const w = 0.55;
+  slide.addImage({
+    data: monogram.dataUri,
+    x: 13.33 - w - 0.45,
+    y: 0.42,
+    w,
+    h: w / monogram.aspect,
   });
 }
 
@@ -62,6 +126,11 @@ export async function GET() {
     }
   }
 
+  const [logoWhite, monogram] = await Promise.all([
+    loadLogo(LOGO_WHITE_PNG),
+    loadLogo(MONOGRAM_COLOR_PNG),
+  ]);
+
   const pptx = new PptxGenJS();
   pptx.defineLayout({ name: "WIDE", width: 13.33, height: 7.5 });
   pptx.layout = "WIDE";
@@ -71,15 +140,28 @@ export async function GET() {
   // --- Title slide: dark background, white headline, Light Blue subtitle ---
   const title = pptx.addSlide();
   title.background = { color: WWT_DARK_BLUE };
-  // Text placeholder until the official WWT logo asset is exported.
-  title.addText(
-    [
-      { text: "WWT", options: { bold: true, color: WHITE, breakLine: false } },
-      { text: "  |  ", options: { color: WWT_LIGHT_BLUE, breakLine: false } },
-      { text: "D2OS Care Tracker", options: { color: WHITE } },
-    ],
-    { x: 0.6, y: 0.35, w: 6, h: 0.4, fontSize: 14, fontFace: FONT }
-  );
+  if (logoWhite) {
+    // White/reversed full logo — the full-color logo lacks contrast on Dark
+    // Blue. Height derives from the PNG's real aspect ratio.
+    const logoW = 2.0;
+    title.addImage({
+      data: logoWhite.dataUri,
+      x: 0.6,
+      y: 0.4,
+      w: logoW,
+      h: logoW / logoWhite.aspect,
+    });
+  } else {
+    // Fallback if the artwork is ever removed from public/branding.
+    title.addText(
+      [
+        { text: "WWT", options: { bold: true, color: WHITE, breakLine: false } },
+        { text: "  |  ", options: { color: WWT_LIGHT_BLUE, breakLine: false } },
+        { text: "D2OS Care Tracker", options: { color: WHITE } },
+      ],
+      { x: 0.6, y: 0.35, w: 6, h: 0.4, fontSize: 14, fontFace: FONT }
+    );
+  }
   title.addText("D2OS Customer Escalations", {
     x: 0.8, y: 2.4, w: 11.7, h: 1.0,
     fontSize: 40, bold: true, color: WHITE, fontFace: FONT,
@@ -96,10 +178,12 @@ export async function GET() {
   // --- Snapshot slide ---
   const snap = pptx.addSlide();
   snap.background = { color: WHITE };
+  // Headline width stops short of the corner monogram to preserve clear space.
   snap.addText("Weekly Snapshot", {
-    x: 0.6, y: 0.4, w: 12, h: 0.6,
+    x: 0.6, y: 0.4, w: 11.4, h: 0.6,
     fontSize: 26, bold: true, color: WWT_LIGHT_BLUE, fontFace: FONT,
   });
+  addInteriorMark(snap, monogram);
   addBrandFooter(snap);
 
   const tierRows: PptxGenJS.TableRow[] = [
@@ -154,9 +238,10 @@ export async function GET() {
   for (const e of care3) {
     const slide = pptx.addSlide();
     slide.background = { color: WHITE };
+    addInteriorMark(slide, monogram);
     addBrandFooter(slide);
     slide.addText(e.account_name, {
-      x: 0.6, y: 0.4, w: 12, h: 0.65,
+      x: 0.6, y: 0.4, w: 11.4, h: 0.65,
       fontSize: 26, bold: true, color: WWT_LIGHT_BLUE, fontFace: FONT,
     });
     // Short Bright Red underline as an escalation accent.
@@ -221,6 +306,7 @@ export async function GET() {
   if (care3.length === 0) {
     const none = pptx.addSlide();
     none.background = { color: WHITE };
+    addInteriorMark(none, monogram);
     addBrandFooter(none);
     none.addText("No active Care 3 / executive-reporting escalations.", {
       x: 0.8, y: 3.2, w: 11.7, h: 0.8,
