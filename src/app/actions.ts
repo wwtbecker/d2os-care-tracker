@@ -113,8 +113,12 @@ export async function archiveAccount(
   const admin = await requireAdmin();
   const id = str(formData, "id");
   if (!id) return { error: "Account id is required." };
+  // Opt-in only: linked escalations may belong to different CSMs, so the
+  // default is to leave them alone and let their owners decide.
+  const cascade = formData.get("cascade") === "on";
 
-  const { data, error } = await db()
+  const supabase = db();
+  const { data, error } = await supabase
     .from("accounts")
     .update({ archived_at: new Date().toISOString(), archived_by: admin.id })
     .eq("id", id)
@@ -123,12 +127,48 @@ export async function archiveAccount(
   if (error) return { error: error.message };
   if (!data) return { error: "Account not found." };
 
+  let cascaded = 0;
+  if (cascade) {
+    const { data: open, error: openError } = await supabase
+      .from("escalations")
+      .select("id, status")
+      .eq("account_id", id)
+      .in("status", ["open", "in_progress"]);
+    if (openError) return { error: openError.message };
+
+    if (open && open.length > 0) {
+      const { error: cascadeError } = await supabase
+        .from("escalations")
+        .update({ status: "archived", archived_at: new Date().toISOString() })
+        .in(
+          "id",
+          open.map((e) => e.id)
+        );
+      if (cascadeError) return { error: cascadeError.message };
+      cascaded = open.length;
+
+      for (const esc of open) {
+        await logAudit({
+          actor_id: admin.id,
+          action: "escalation.status_changed",
+          escalation_id: esc.id,
+          details: { from: esc.status, to: "archived", via: "account_archive_cascade" },
+        });
+      }
+    }
+  }
+
   await logAudit({
     actor_id: admin.id,
     action: "account.archived",
-    details: { account_id: id, name: data.name },
+    details: { account_id: id, name: data.name, cascaded_escalations: cascaded },
   });
   revalidatePath("/accounts");
+  if (cascaded > 0) {
+    revalidatePath("/escalations");
+    revalidatePath("/archive");
+    revalidatePath("/");
+  }
   return { ok: true };
 }
 

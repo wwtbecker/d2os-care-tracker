@@ -150,11 +150,26 @@ function ArchiveAccountConfirm({
       <input type="hidden" name="id" value={account.id} />
       <FormError error={state?.error} />
       {openCount > 0 && (
-        <p className="text-xs font-semibold text-red-800">
-          ⚠ This account has {openCount} open escalation
-          {openCount === 1 ? "" : "s"} linked to it. Archiving the account does
-          not change those escalations — they stay active and keep working.
-        </p>
+        <>
+          <p className="text-xs font-semibold text-red-800">
+            ⚠ This account has {openCount} open escalation
+            {openCount === 1 ? "" : "s"} linked to it. By default they are left
+            alone — they stay active and keep working, and their owners decide
+            what happens to them.
+          </p>
+          <label className="flex items-start gap-2 text-xs text-red-800">
+            <input
+              type="checkbox"
+              name="cascade"
+              className="mt-0.5 h-4 w-4 rounded border-red-300"
+            />
+            <span>
+              Also archive {openCount === 1 ? "the" : `all ${openCount}`} linked
+              open escalation{openCount === 1 ? "" : "s"} now (they can be
+              reopened from the Archive)
+            </span>
+          </label>
+        </>
       )}
       <p className="text-xs text-red-800">
         Archive “{account.name}”? It disappears from the active account list
