@@ -97,8 +97,10 @@ export async function getTypes(includeInactive = false): Promise<EscalationType[
 // Accounts (manual Gainsight stub)
 // ---------------------------------------------------------------------------
 
-export async function getAccounts(): Promise<Account[]> {
-  const { data, error } = await db().from("accounts").select("*").order("name");
+export async function getAccounts(includeArchived = false): Promise<Account[]> {
+  let query = db().from("accounts").select("*").order("name");
+  if (!includeArchived) query = query.is("archived_at", null);
+  const { data, error } = await query;
   if (error) fail("Failed to load accounts", error);
   return data ?? [];
 }
@@ -107,11 +109,32 @@ export async function searchAccounts(q: string): Promise<Account[]> {
   const { data, error } = await db()
     .from("accounts")
     .select("*")
+    .is("archived_at", null)
     .ilike("name", `%${q}%`)
     .order("name")
     .limit(10);
   if (error) fail("Failed to search accounts", error);
   return data ?? [];
+}
+
+/**
+ * Open (non-archived, non-resolved) escalation counts keyed by account id.
+ * Used to warn — not block — when an admin archives an account that still
+ * has active escalations linked to it.
+ */
+export async function getOpenEscalationCounts(): Promise<Record<string, number>> {
+  const { data, error } = await db()
+    .from("escalations")
+    .select("account_id")
+    .in("status", ["open", "in_progress"])
+    .not("account_id", "is", null);
+  if (error) fail("Failed to count open escalations", error);
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    if (row.account_id) counts[row.account_id] = (counts[row.account_id] ?? 0) + 1;
+  }
+  return counts;
 }
 
 // ---------------------------------------------------------------------------

@@ -56,6 +56,15 @@ export function StatusControls({
   const options = TRANSITIONS[status].filter(
     (t) => t.to !== "archived" || isAdmin
   );
+  // Admins may archive from ANY status, not just Resolved — the escape hatch
+  // for cleaning up test/junk records stuck in Open or In Progress.
+  if (
+    isAdmin &&
+    status !== "archived" &&
+    !options.some((t) => t.to === "archived")
+  ) {
+    options.push({ to: "archived", label: "Archive (admin)" });
+  }
 
   return (
     <div className="space-y-3">
@@ -80,6 +89,13 @@ export function StatusControls({
         <form action={formAction} className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <input type="hidden" name="id" value={escalationId} />
           <input type="hidden" name="status" value={target} />
+          {target === "archived" && status !== "resolved" && (
+            <p className="text-xs text-slate-500">
+              Admin archive: this moves the escalation to the Archive without
+              resolving it. Nothing is deleted — it stays searchable there and
+              can be reopened.
+            </p>
+          )}
           <label className={labelClass}>
             Note for this stage change ({status.replace("_", " ")} →{" "}
             {target.replace("_", " ")})

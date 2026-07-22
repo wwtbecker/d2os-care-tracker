@@ -21,7 +21,8 @@ export default async function ArchivePage(props: {
         <h1 className="text-2xl font-semibold text-slate-900">Archive</h1>
         <p className="mt-1 text-sm text-slate-500">
           Resolved escalations are archived automatically after{" "}
-          {settings.auto_archive_days} days. Nothing is deleted — the full
+          {settings.auto_archive_days} days; administrators can also archive a
+          record manually from its detail page. Nothing is deleted — the full
           history stays searchable here.
         </p>
       </div>

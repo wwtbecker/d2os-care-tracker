@@ -54,6 +54,8 @@ export interface Account {
   notes: string | null;
   source: "manual" | "gainsight";
   created_by: string | null;
+  archived_at: string | null;
+  archived_by: string | null;
   created_at: string;
   updated_at: string;
 }

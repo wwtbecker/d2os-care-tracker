@@ -100,6 +100,64 @@ export async function updateAccount(
   return { ok: true };
 }
 
+/**
+ * Admin-only soft archive: hides the account from active lists and pickers
+ * while keeping it viewable and restorable under "Archived accounts".
+ * Open escalations linked to the account are untouched — the UI warns but
+ * never blocks, since this exists to clean up test/junk POC data.
+ */
+export async function archiveAccount(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const id = str(formData, "id");
+  if (!id) return { error: "Account id is required." };
+
+  const { data, error } = await db()
+    .from("accounts")
+    .update({ archived_at: new Date().toISOString(), archived_by: admin.id })
+    .eq("id", id)
+    .select("name")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Account not found." };
+
+  await logAudit({
+    actor_id: admin.id,
+    action: "account.archived",
+    details: { account_id: id, name: data.name },
+  });
+  revalidatePath("/accounts");
+  return { ok: true };
+}
+
+export async function restoreAccount(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const id = str(formData, "id");
+  if (!id) return { error: "Account id is required." };
+
+  const { data, error } = await db()
+    .from("accounts")
+    .update({ archived_at: null, archived_by: null })
+    .eq("id", id)
+    .select("name")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Account not found." };
+
+  await logAudit({
+    actor_id: admin.id,
+    action: "account.restored",
+    details: { account_id: id, name: data.name },
+  });
+  revalidatePath("/accounts");
+  return { ok: true };
+}
+
 // ---------------------------------------------------------------------------
 // Escalations
 // ---------------------------------------------------------------------------
