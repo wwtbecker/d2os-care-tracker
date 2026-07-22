@@ -228,6 +228,14 @@ export function ElevateButton({
   );
   const [confirming, setConfirming] = useState(false);
 
+  // Collapse the confirmation box once the elevation has gone through — the
+  // refreshed record (elevated timestamp, "Re-elevate" label) is the feedback.
+  const [prevActionState, setPrevActionState] = useState(state);
+  if (state !== prevActionState) {
+    setPrevActionState(state);
+    if (state?.ok) setConfirming(false);
+  }
+
   return (
     <div className="space-y-2">
       <FormError error={state?.error} />

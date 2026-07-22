@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pocMode } from "@/lib/auth-mode";
+import { PocBanner } from "@/components/poc-banner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full">{children}</body>
+      {/* Bottom padding keeps the fixed POC banner from covering content. */}
+      <body className={pocMode() ? "min-h-full pb-9" : "min-h-full"}>
+        {children}
+        <PocBanner />
+      </body>
     </html>
   );
 }

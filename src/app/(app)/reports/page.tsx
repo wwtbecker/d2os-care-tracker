@@ -16,6 +16,7 @@ import {
   VolumeTrendChart,
 } from "@/components/report-charts";
 import { ExecSummaryPanel } from "@/components/exec-summary-panel";
+import { aiEnabled } from "@/lib/anthropic";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -152,6 +153,7 @@ export default async function ReportsPage() {
               ? { content: latestExec.content, created_at: latestExec.created_at }
               : null
           }
+          aiAvailable={aiEnabled()}
         />
       </section>
     </div>

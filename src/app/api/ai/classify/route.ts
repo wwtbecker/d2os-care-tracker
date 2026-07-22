@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { anthropic, AI_MODEL } from "@/lib/anthropic";
+import { anthropic, aiEnabled, AI_MODEL, AI_UNAVAILABLE_MESSAGE } from "@/lib/anthropic";
 import { getSettings, getTiers, getTypes } from "@/lib/data";
 import { requireMemberApi } from "@/lib/session";
 
@@ -14,6 +14,9 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const { member, response } = await requireMemberApi();
   if (!member) return response;
+  if (!aiEnabled()) {
+    return Response.json({ error: AI_UNAVAILABLE_MESSAGE }, { status: 503 });
+  }
 
   const body = await request.json().catch(() => null);
   const description = typeof body?.description === "string" ? body.description.trim() : "";

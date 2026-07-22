@@ -22,6 +22,7 @@ import {
   TouchpointForm,
 } from "@/components/detail-panels";
 import { AiSummaryPanel } from "@/components/ai-panel";
+import { aiEnabled } from "@/lib/anthropic";
 import { EscalationForm } from "@/components/escalation-form";
 import { formatDate, formatDateTime, isOverdue } from "@/lib/format";
 
@@ -250,6 +251,7 @@ export default async function EscalationDetailPage(props: {
                   accounts={accounts}
                   settings={settings}
                   currentMemberId={member.id}
+                  aiAvailable={aiEnabled()}
                 />
               </div>
             </details>
@@ -304,6 +306,7 @@ export default async function EscalationDetailPage(props: {
                     }
                   : null
               }
+              aiAvailable={aiEnabled()}
             />
           </section>
 

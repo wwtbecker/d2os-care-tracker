@@ -21,8 +21,9 @@ interface Props {
   accounts: Account[];
   settings: AppSettings;
   currentMemberId: string;
-  /** AI tier suggestion is rendered by the parent (server) — this form only
-   * exposes the description so the suggestion endpoint can read it. */
+  /** False when ANTHROPIC_API_KEY is not configured — the AI suggest button
+   * degrades to an explanatory note instead of a failing request. */
+  aiAvailable: boolean;
 }
 
 export function EscalationForm({
@@ -34,6 +35,7 @@ export function EscalationForm({
   accounts,
   settings,
   currentMemberId,
+  aiAvailable,
 }: Props) {
   const action = mode === "create" ? createEscalation : updateEscalation;
   const [state, formAction] = useActionState<ActionResult, FormData>(action, undefined);
@@ -168,15 +170,23 @@ export function EscalationForm({
           className={inputClass}
         />
         <div className="mt-2 flex items-start gap-3">
-          <button
-            type="button"
-            onClick={suggestTier}
-            disabled={suggesting}
-            className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60"
-          >
-            {suggesting ? "Analyzing…" : "✦ Suggest tier with AI"}
-          </button>
-          {suggestion && <p className="text-xs text-slate-500">{suggestion}</p>}
+          {aiAvailable ? (
+            <>
+              <button
+                type="button"
+                onClick={suggestTier}
+                disabled={suggesting}
+                className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {suggesting ? "Analyzing…" : "✦ Suggest tier with AI"}
+              </button>
+              {suggestion && <p className="text-xs text-slate-500">{suggestion}</p>}
+            </>
+          ) : (
+            <p className="text-xs text-slate-400">
+              ✦ AI tier suggestion unavailable — API key not configured.
+            </p>
+          )}
         </div>
       </div>
 
@@ -242,7 +252,7 @@ export function EscalationForm({
             ))}
           </select>
           <p className="mt-1 text-xs text-slate-400">
-            Pre-filled from your SSO identity.
+            Pre-filled from your signed-in identity.
           </p>
         </div>
 

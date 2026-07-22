@@ -255,15 +255,21 @@ insert into public.escalation_types (key, label, description, sort_order) values
 
 -- Team roster. IMPORTANT: emails must match the email claim returned by Okta.
 -- Adjust in the Admin page (or here) if any address differs.
+-- Roster verified against the WWT org chart. Chris (Director, Engineering
+-- Services) and Tara (Team Lead, Day-2 Ops) sit above/lead this team, so
+-- they get admin-level access rather than CSM-level.
 insert into public.team_members (email, name, title, role) values
-  ('elena.vitkin@wwt.com',  'Elena Vitkin',  'Sr. Manager, Day-2 Operations', 'admin'),
-  ('will.feil@wwt.com',     'Will Feil',     'Customer Success Manager',      'csm'),
-  ('jamell.mixon@wwt.com',  'Jamell Mixon',  'Customer Success Manager',      'csm'),
-  ('scott.moyer@wwt.com',   'Scott Moyer',   'Customer Success Manager',      'csm'),
-  ('chris.nickl@wwt.com',   'Chris Nickl',   'Director, Engineering Services','csm'),
-  ('tara.maher@wwt.com',    'Tara Maher',    'Customer Success Manager',      'csm'),
+  ('elena.vitkin@wwt.com',  'Elena Vitkin',  'Sr. Manager, Day-2 Operations',  'admin'),
+  ('chris.nickl@wwt.com',   'Chris Nickl',   'Director, Engineering Services', 'admin'),
+  ('tara.maher@wwt.com',    'Tara Maher',    'Team Lead, Day-2 Ops',           'admin'),
+  ('will.feil@wwt.com',     'Will Feil',     'Customer Success Manager',       'csm'),
+  ('jamell.mixon@wwt.com',  'Jamell Mixon',  'Customer Success Manager',       'csm'),
+  ('scott.moyer@wwt.com',   'Scott Moyer',   'Customer Success Manager',       'csm'),
+  ('rai.rivera@wwt.com',    'Rai Rivera',    'Customer Success Manager',       'csm'),
+  ('sahil.ganjoo@wwt.com',  'Sahil Ganjoo',  'Customer Success Manager',       'csm'),
+  ('daniel.saito@wwt.com',  'Daniel Saito',  'Customer Success Manager',       'csm'),
   -- System administrator (app maintainer)
-  ('elliot.becker@wwt.com', 'Elliot Becker', 'Intern, Day-2 Operations',      'admin');
+  ('elliot.becker@wwt.com', 'Elliot Becker', 'Intern, Day-2 Operations',       'admin');
 
 insert into public.app_settings (key, value) values
   -- Open design question with Elena: tiers-only vs tiers + types.

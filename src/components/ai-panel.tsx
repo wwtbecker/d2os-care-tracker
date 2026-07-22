@@ -11,9 +11,13 @@ import { useRouter } from "next/navigation";
 export function AiSummaryPanel({
   escalationId,
   latest,
+  aiAvailable,
 }: {
   escalationId: string;
   latest: { content: string; created_at: string; model: string } | null;
+  /** False when ANTHROPIC_API_KEY is not configured — the generate button
+   * degrades to an explanatory note instead of a failing request. */
+  aiAvailable: boolean;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -41,6 +45,22 @@ export function AiSummaryPanel({
   }
 
   const content = fresh ?? latest?.content ?? null;
+
+  if (!aiAvailable) {
+    return (
+      <div className="space-y-3">
+        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          ✦ AI features unavailable — API key not configured. SPINA summaries
+          will work once ANTHROPIC_API_KEY is set.
+        </p>
+        {content && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <SpinaContent content={content} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
