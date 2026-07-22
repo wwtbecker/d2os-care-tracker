@@ -15,6 +15,7 @@ import {
   ResolutionChart,
   VolumeTrendChart,
 } from "@/components/report-charts";
+import { EmailDraftPanel } from "@/components/email-draft-panel";
 import { ExecSummaryPanel } from "@/components/exec-summary-panel";
 import { aiEnabled } from "@/lib/anthropic";
 import { formatDate } from "@/lib/format";
@@ -155,6 +156,18 @@ export default async function ReportsPage() {
           }
           aiAvailable={aiEnabled()}
         />
+      </section>
+
+      {/* Leadership Status Update email draft */}
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Leadership Status Update — email draft
+        </h2>
+        <p className="mb-4 mt-1 text-sm text-slate-500">
+          A ready-to-paste status email covering the same Care 3 /
+          executive-reporting escalations as the summary and deck above.
+        </p>
+        <EmailDraftPanel />
       </section>
     </div>
   );

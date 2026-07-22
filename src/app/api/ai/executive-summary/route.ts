@@ -1,6 +1,7 @@
 import { anthropic, aiEnabled, AI_MODEL, AI_UNAVAILABLE_MESSAGE } from "@/lib/anthropic";
 import { db } from "@/lib/supabase";
-import { getComments, getEscalations, getTouchpoints, logAudit } from "@/lib/data";
+import { getExecutiveEscalations } from "@/lib/care3";
+import { getComments, getTouchpoints, logAudit } from "@/lib/data";
 import { requireMemberApi } from "@/lib/session";
 import { formatDate, todayISO } from "@/lib/format";
 
@@ -19,9 +20,8 @@ export async function POST() {
   }
 
   try {
-    const escalations = (await getEscalations({ status: "active" })).filter(
-      (e) => e.tier_key === "care_3" || e.executive_reporting
-    );
+    // Same selection as the PPTX export and the email draft (lib/care3.ts).
+    const escalations = await getExecutiveEscalations();
 
     if (escalations.length === 0) {
       return Response.json({
